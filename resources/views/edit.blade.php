@@ -29,7 +29,7 @@
                 e.preventDefault();
                 $.ajax({
                     url: '{{ $point->id ? route('points.update', $point->id) : route('points.store') }}',
-                    type: 'PUT',
+                    type: '{{ $point->id ? 'PUT' : 'POST' }}',
                     data: $(this).serialize(),
                     success: function (data) {
                         window.location.href = '{{ route('points.index') }}';
