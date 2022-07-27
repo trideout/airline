@@ -32,7 +32,8 @@ class PointsController extends Controller
      */
     public function create()
     {
-        //
+        $point = new Point();
+        return view('edit', compact('point'));
     }
 
     /**
