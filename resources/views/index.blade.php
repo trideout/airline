@@ -40,7 +40,8 @@
                 {data: 'x'},
                 {data: 'y'},
                 {render: function (data, type, row) {
-                    return '<a href="{{ route('points.edit', ':id') }}'.replace(':id', row.id) + '">Edit</a>';
+                    return '<a href="{{ route('points.edit', ':id') }}'.replace(':id', row.id) + '">Edit</a>' + '&nbsp;&nbsp;&nbsp;' +
+                        '<a href="{{ route('points.delete', ':id') }}'.replace(':id', row.id) + '">Delete</a>';
                 }}
             ]
         });

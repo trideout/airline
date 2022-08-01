@@ -102,21 +102,21 @@
                 },
                 get farthestPointText() {
                     if (this.furthestPoints.length > 1) {
-                        return `The farthest points are ${this.farthestDistance} units away.`;
+                        return `The farthest points are ${Math.round(this.farthestDistance * 10)/10} units away.`;
                     }
-                    return `The farthest point is ${this.farthestDistance} units away.`;
+                    return `The farthest point is ${Math.round(this.farthestDistance * 10)/10} units away.`;
                 },
                 get closestPointText() {
                     if (this.closestPoints.length > 1) {
-                        return `The closest points are ${this.closestDistance} units away.`;
+                        return `The closest points are ${Math.round(this.closestDistance * 10)/10} units away.`;
                     }
-                    return `The closest point is ${this.closestDistance} units away.`;
+                    return `The closest point is ${Math.round(this.closestDistance * 10)/10} units away.`;
                 }
             }));
         });
 
         function calculateDistance(x1, y1, x2, y2) {
-            return Math.round(Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) * 10) / 10;
+            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         }
     </script>
     <script>

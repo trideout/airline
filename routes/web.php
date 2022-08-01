@@ -14,4 +14,5 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/points/all', [PointsController::class, 'all'])->name('points.all');
+Route::get('/point/{id}/delete', [PointsController::class, 'delete'])->name('points.delete');
 Route::resource('/points', PointsController::class);

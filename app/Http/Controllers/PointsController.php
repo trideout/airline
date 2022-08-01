@@ -94,10 +94,10 @@ class PointsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function delete($id)
     {
         $point = Point::findOrFail($id);
         $point->delete();
-        return response()->json(['message' => 'Point deleted']);
+        return redirect()->back();
     }
 }
