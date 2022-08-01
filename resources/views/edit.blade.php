@@ -4,21 +4,39 @@
   src="https://code.jquery.com/jquery-3.6.0.min.js"
   integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
   crossorigin="anonymous"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body>
+<body x-data="application">
 <div class=container id="errorsDiv"></div>
-    <form action="#" method="POST">
+    <form action="#">
         {{ csrf_field() }}
         <label for="name">Name</label>
-        <input type="text" name="name" placeholder="Name" value="{{ $point->name }}">
+        <input
+            type="text"
+            name="name"
+            placeholder="Name"
+            x-model="point.name"
+        >
         <label for="x">X</label>
-        <input type="text" name="x" placeholder="X" value="{{ $point->x }}">
+        <input
+            type="text"
+            name="x"
+            placeholder="X"
+            x-model='point.x'
+            x-on:keyup="$store.dirty = true;"
+            >
         <label for="y">Y</label>
-        <input type="text" name="y" placeholder="Y" value="{{ $point->y }}">
-        <input id="submitForm" type="submit" value="Submit" disabled=true>
+        <input
+            type="text"
+            name="y"
+            placeholder="Y"
+            x-model='point.y'
+            x-on:keyup="$store.dirty = true;"
+        >
+        <input id="submitForm" type="submit" value="Submit" x-bind:disabled=" !$store.dirty ">
     </form>
-    <div id="closestPointDiv"></div>
-    <table id="closestPoints" style="border:2px solid black;width:400px;">
+    <div id="closestPointDiv" x-show="closestPoints.length > 0" x-text="closestPointText"></div>
+    <table id="closestPoints" x-show="closestPoints.length > 0" style="border:2px solid black;width:400px;">
         <thead>
             <tr>
                 <th style="text-align:left">Name</th>
@@ -27,11 +45,18 @@
             </tr>
         </thead>
         <tbody>
+        <template x-for="point in closestPoints">
+            <tr>
+                <td style="text-align:left" x-text="point.name"></td>
+                <td style="text-align:left" x-text="point.x"></td>
+                <td style="text-align:left" x-text="point.y"></td>
+            </tr>
+        </template>
         </tbody>
     </table>
     <br><br>
-    <div id="farthestPointDiv"></div>
-    <table id="farthestPoints" style="border:2px solid black;width:400px;">
+    <div id="farthestPointDiv" x-show="furthestPoints.length > 0" x-text="farthestPointText"></div>
+    <table id="farthestPoints"  x-show="furthestPoints.length > 0" style="border:2px solid black;width:400px;">
         <thead>
             <tr>
                 <th style="text-align:left">Name</th>
@@ -40,15 +65,62 @@
             </tr>
         </thead>
         <tbody>
+        <template x-for="point in furthestPoints">
+            <tr>
+                <td style="text-align:left" x-text="point.name"></td>
+                <td style="text-align:left" x-text="point.x"></td>
+                <td style="text-align:left" x-text="point.y"></td>
+            </tr>
+        </template>
         </tbody>
     </table>
     <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('dirty', false);
+            Alpine.data('application', () => ({
+                point: @json($point),
+                points: @json($points),
+                closestDistance: '',
+                farthestDistance: '',
+                get furthestPoints() {
+                    this.points.forEach(point => {
+                        point.distance = calculateDistance(point.x, point.y, this.point.x, this.point.y);
+                    });
+                    this.farthestDistance = this.points.reduce((prev, curr) => {
+                        return prev.distance > curr.distance ? prev : curr;
+                    }).distance;
+                    return this.points.filter(point => point.distance === this.farthestDistance);
+                 },
+                get closestPoints() {
+                    this.points.forEach(point => {
+                        point.distance = calculateDistance(point.x, point.y, this.point.x, this.point.y);
+                    });
+                    this.closestDistance = this.points.reduce((prev, curr) => {
+                        return prev.distance < curr.distance ? prev : curr;
+                    }).distance;
+                    return this.points.filter(point => point.distance === this.closestDistance);
+                },
+                get farthestPointText() {
+                    if (this.furthestPoints.length > 1) {
+                        return `The farthest points are ${this.farthestDistance} units away.`;
+                    }
+                    return `The farthest point is ${this.farthestDistance} units away.`;
+                },
+                get closestPointText() {
+                    if (this.closestPoints.length > 1) {
+                        return `The closest points are ${this.closestDistance} units away.`;
+                    }
+                    return `The closest point is ${this.closestDistance} units away.`;
+                }
+            }));
+        });
+
+        function calculateDistance(x1, y1, x2, y2) {
+            return Math.round(Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) * 10) / 10;
+        }
+    </script>
+    <script>
         $(document).ready(function () {
-            findClosestAndFurthestPoint($('input[name="x"]').val(), $('input[name="y"]').val());
-            $('input').on('keyup', function () {
-                $('#submitForm').prop('disabled', false);
-                findClosestAndFurthestPoint($('input[name="x"]').val(), $('input[name="y"]').val());
-            });
             $('form').submit(function (e) {
                 e.preventDefault();
                 $.ajax({
@@ -69,55 +141,6 @@
                 });
             });
         });
-        points = {!! \App\Models\Point::all()->filter( fn($p) => $p->id != $point->id)->toJson() !!};
-        function calculateDistance(x1, y1, x2, y2) {
-            return Math.round(Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) * 10) / 10;
-        }
-        function findClosestAndFurthestPoint(x, y) {
-            if (!$.isNumeric(x) || !$.isNumeric(y)) {
-                $('#closestPointDiv').html("");
-                $('#farthestPointDiv').html("");
-                return;
-            }
-            farthestPoint = [];
-            closestPoint = [];
-            closestDistance = null;
-            farthestDistance = null;
-            $.each(points, function (key, value) {
-                distance = calculateDistance(x, y, value.x, value.y);
-                if (closestDistance == null || distance <= closestDistance) {
-                    if (distance !== closestDistance) {
-                        closestPoint = [];
-                    }
-                    closestDistance = distance;
-                    closestPoint.push(value);
-                }
-            });
-            $.each(points, function (key, value) {
-                distance = calculateDistance(x, y, value.x, value.y);
-                if (farthestDistance == null || distance >= farthestDistance) {
-                    if (distance !== farthestDistance) {
-                        farthestPoint = [];
-                    }
-                    farthestDistance = distance;
-                    farthestPoint.push(value);
-                }
-            });
-            clearClosestPointsTable();
-            $('#closestPointDiv').html("The nearest point"+ (closestPoint.length > 1 ? "s are" : " is") +" at distance " + Math.round(closestDistance * 10 )/10 + "<br>");
-            $('#farthestPointDiv').html("The farthest point"+ (farthestPoint.length > 1 ? "s are" : " is") +" at distance " + Math.round(farthestDistance * 10 )/10 + "<br>");
-            $.each(closestPoint, function (key, value) {
-                $('#closestPoints tbody').append('<tr><td>' + value.name + '</td><td>' + value.x + '</td><td>' + value.y + '</td></tr>');
-            });
-            $.each(farthestPoint, function (key, value) {
-                $('#farthestPoints tbody').append('<tr><td>' + value.name + '</td><td>' + value.x + '</td><td>' + value.y + '</td></tr>');
-            });
-        }
-
-        function clearClosestPointsTable() {
-            $('#closestPoints tbody tr').remove();
-            $('#farthestPoints tbody tr').remove();
-        }
     </script>
 </body>
 </html>
