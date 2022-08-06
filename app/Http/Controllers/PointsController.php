@@ -33,8 +33,8 @@ class PointsController extends Controller
     public function create()
     {
         $point = new Point();
-        $points = Point::all()->filter( fn($p) => $p->id != $point->id)->values();
-        return view('edit', compact('point','points'));
+        $points = Point::all();
+        return view('edit', compact('point', 'points'));
     }
 
     /**
@@ -70,8 +70,8 @@ class PointsController extends Controller
     public function edit($id)
     {
         $point = Point::findOrFail($id);
-        $points = Point::all()->filter( fn($p) => $p->id != $point->id)->values();
-        return view('edit', compact('point','points'));
+        $points = Point::all()->filter(fn ($p) => $p->id != $point->id)->values();
+        return view('edit', compact('point', 'points'));
     }
 
     /**
